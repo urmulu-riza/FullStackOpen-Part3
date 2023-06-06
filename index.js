@@ -62,7 +62,7 @@ app.post('/api/persons', (request, response) => {
     });
   }
   if (persons.find((p) => p.name === name)) {
-    return response.status(400).json({
+    return response.status(422).json({
       error: 'Name must be unique',
     });
   }
@@ -76,7 +76,6 @@ app.post('/api/persons', (request, response) => {
 const unknownEndpoint = (request, response) => {
   response.status(404).send({ error: 'unknown endpoint' });
 };
-
 app.use(unknownEndpoint);
 const PORT = 3001;
 app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
