@@ -1,9 +1,16 @@
 const express = require('express');
 const app = express();
-app.use(express.json()); //it takes the JSON data of a request, transforms it into a JavaScript object and then attaches it to the body property of the request object before the route handler is called.
-
+app.use(express.json()); //takes the JSON data of a req, transforms into JS obj & attaches it to the body property of the req obj before the route handler is called
+//Morgan
 const morgan = require('morgan');
-app.use(morgan('tiny'));
+// app.use(morgan('tiny'));
+morgan.token('body', (req) =>
+  Object.values(req.body)[0] ? JSON.stringify(req.body) : null
+);
+// morgan.token('type',  req=>req.headers['content-type'])
+app.use(
+  morgan(':method :url :status :res[content-length] - :response-time ms :body')
+);
 
 let persons = [
   {
@@ -48,12 +55,20 @@ app.delete('/api/persons/:id', (request, response) => {
 });
 app.post('/api/persons', (request, response) => {
   const { name, number } = request.body;
-  const err = (error) =>
-    response.status(400).json({
-      error,
+
+  if (!(name && number)) {
+    return response.status(400).json({
+      error: 'name or number missing',
     });
-  !(name && number) && err('name or number missing');
-  persons.find((p) => p.name === name) && err('Name must be unique');
+  }
+  if (persons.find((p) => p.name === name)) {
+    return response.status(400).json({
+      error: 'Name must be unique',
+    });
+  }
+  if (request.header('Content-Type') !== 'application/json') {
+    return res.status(400).json({ error: 'Content-Type Unsupported' });
+  }
   const person = { name, number, id: Math.trunc(Math.random() * 10000) };
   persons = persons.concat(person);
   response.json(person);
