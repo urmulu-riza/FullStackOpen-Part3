@@ -1,6 +1,10 @@
 const express = require('express');
 const app = express();
 app.use(express.json()); //it takes the JSON data of a request, transforms it into a JavaScript object and then attaches it to the body property of the request object before the route handler is called.
+
+const morgan = require('morgan');
+app.use(morgan('tiny'));
+
 let persons = [
   {
     id: 1,
