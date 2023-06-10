@@ -22,7 +22,9 @@ const cors = require('cors');
 app.use(cors());
 
 app.get('/api/persons', (request, response) => {
-  Person.find({}).then((persons) => response.json(persons));
+  Person.find({}).then((persons) =>
+    response.json(persons).catch((error) => next(error))
+  );
 });
 // app.get('/info', (request, response) => {
 //   let time = new Date().toString();
@@ -35,10 +37,7 @@ app.get('/api/persons/:id', (request, response) => {
     .then((person) =>
       person ? response.json(person) : response.status(404).end()
     )
-    .catch((error) => {
-      console.log(error);
-      response.status(400).send({ error: 'malformatted id' });
-    });
+    .catch((error) => next(error));
 });
 app.delete('/api/persons/:id', (request, response, next) => {
   Person.findByIdAndRemove(request.params.id)
@@ -47,7 +46,6 @@ app.delete('/api/persons/:id', (request, response, next) => {
 });
 app.post('/api/persons', (request, response) => {
   const { name, number } = request.body;
-
   if (!(name && number)) {
     return response.status(400).json({
       error: 'name or number missing',
@@ -64,11 +62,20 @@ app.post('/api/persons', (request, response) => {
   const person = new Person({ name, number });
   person.save().then((savedPerson) => response.json(savedPerson));
 });
-
+//unknownEndpoint
 const unknownEndpoint = (request, response) => {
   response.status(404).send({ error: 'unknown endpoint' });
 };
 app.use(unknownEndpoint);
-
+//errorHandler // the last loaded middleware!
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message);
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' });
+  }
+  next(error);
+};
+app.use(errorHandler);
+//connect
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
