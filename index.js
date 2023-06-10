@@ -26,13 +26,15 @@ app.get('/api/persons', (request, response) => {
     .then((persons) => response.json(persons))
     .catch((error) => next(error));
 });
-// app.get('/info', (request, response) => {
-//   let time = new Date().toString();
-//   response.send(
-//     `<div><br/><p>Phonebook has info for ${persons.length} people</p><p>${time}</p></div>`
-//   );
-// });
-app.get('/api/persons/:id', (request, response) => {
+app.get('/info', (request, response, next) => {
+  Person.estimatedDocumentCount({})
+    .then((count) => {
+      const msg = `<div><br/><p>Phonebook has info for ${count} people</p><p>${new Date().toString()}</p></div>`;
+      response.send(msg);
+    })
+    .catch((error) => next(error));
+});
+app.get('/api/persons/:id', (request, response, next) => {
   Person.findById(request.params.id)
     .then((person) =>
       person ? response.json(person) : response.status(404).end()
@@ -55,9 +57,9 @@ app.post('/api/persons', (request, response, next) => {
     return res.status(400).json({ error: 'Content-Type Unsupported' });
   }
   // if (persons.find((p) => p.name === name)) {
-  //   return response.status(422).json({
-  //     error: 'Name must be unique',
-  //   });
+  // return response.status(422).json({
+  //   error: 'Name must be unique',
+  // });
   // }
   const person = new Person({ name, number });
   person
