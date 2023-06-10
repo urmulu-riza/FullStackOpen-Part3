@@ -22,9 +22,9 @@ const cors = require('cors');
 app.use(cors());
 
 app.get('/api/persons', (request, response) => {
-  Person.find({}).then((persons) =>
-    response.json(persons).catch((error) => next(error))
-  );
+  Person.find({})
+    .then((persons) => response.json(persons))
+    .catch((error) => next(error));
 });
 // app.get('/info', (request, response) => {
 //   let time = new Date().toString();
@@ -44,23 +44,34 @@ app.delete('/api/persons/:id', (request, response, next) => {
     .then((result) => response.status(204).end())
     .catch((error) => next(error));
 });
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
   const { name, number } = request.body;
   if (!(name && number)) {
     return response.status(400).json({
       error: 'name or number missing',
     });
   }
+  if (request.header('Content-Type') !== 'application/json') {
+    return res.status(400).json({ error: 'Content-Type Unsupported' });
+  }
   // if (persons.find((p) => p.name === name)) {
   //   return response.status(422).json({
   //     error: 'Name must be unique',
   //   });
   // }
-  if (request.header('Content-Type') !== 'application/json') {
-    return res.status(400).json({ error: 'Content-Type Unsupported' });
-  }
   const person = new Person({ name, number });
-  person.save().then((savedPerson) => response.json(savedPerson));
+  person
+    .save()
+    .then((savedPerson) => response.json(savedPerson))
+    .catch((error) => next(error));
+});
+app.put('/api/persons/:id', (request, response, next) => {
+  const { name, number } = request.body;
+  if (!name && !number)
+    return response.status(400).json({ error: 'Name or Number missing' });
+  Person.findByIdAndUpdate(request.params.id, { name, number }, { new: true })
+    .then((updatedPerson) => response.json(updatedPerson))
+    .catch((error) => next(error));
 });
 //unknownEndpoint
 const unknownEndpoint = (request, response) => {
